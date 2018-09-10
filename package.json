@@ -1,0 +1,39 @@
+{
+    "name": "zax-cli",
+    "version": "0.0.1",
+    "description": "dsp team cli tools",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "bin": {
+        "zax": "./index.js"
+    },
+    "engines": {
+        "node": ">=8.0.0"
+    },
+    "keywords": [
+        "skeleton",
+        "package"
+    ],
+    "dependencies": {
+        "chalk": "^2.1.0",
+        "co": "^4.6.0",
+        "co-prompt": "^1.0.0",
+        "commander": "^2.11.0",
+        "glob": "^7.1.2",
+        "js-beautify": "^1.7.4",
+        "ncp": "^2.0.0",
+        "progress": "^2.0.0",
+        "request": "^2.83.0",
+        "superagent": "^3.6.3"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/jsonchou/zax-cli.git"
+    },
+    "homepage": "https://github.com/jsonchou/zax-cli",
+    "author": "jsonchou",
+    "license": "MIT",
+    "private": false
+}
