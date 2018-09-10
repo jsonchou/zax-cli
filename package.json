@@ -21,12 +21,14 @@
         "co": "^4.6.0",
         "co-prompt": "^1.0.0",
         "commander": "^2.11.0",
+        "download-git-repo": "^1.1.0",
         "glob": "^7.1.2",
         "js-beautify": "^1.7.4",
         "ncp": "^2.0.0",
         "progress": "^2.0.0",
         "request": "^2.83.0",
-        "superagent": "^3.6.3"
+        "superagent": "^3.6.3",
+        "vue-cli": "^2.9.6"
     },
     "repository": {
         "type": "git",
