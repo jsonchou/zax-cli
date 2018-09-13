@@ -1,16 +1,16 @@
-module.exports = {
-    server: {
-        development: {
-            host: '10.253.4.128',
-            port: 22,
-            username: 'static',
-            password: 'Static123'
+module.exports ={
+    "server": {
+        "development": {
+            "host": "10.253.4.128",
+            "port": 22,
+            "username": "static",
+            "password": "Static123"
         },
-        production: {
-            host: '10.253.4.128',
-            port: 22,
-            username: 'static',
-            password: 'Static123'
+        "production": {
+            "host": "10.253.4.128",
+            "port": 22,
+            "username": "static",
+            "password": "Static123"
         }
     },
     "devServer": {
@@ -48,7 +48,7 @@ module.exports = {
             "ignored": {}
         }
     },
-    "spa": "vue",
+    "spa": "react",
     "fullbuild": false,
     "list": {
         "vue": [{
@@ -73,9 +73,23 @@ module.exports = {
             "ftp": false
         }, {
             "name": "hehe",
-            "txt": "基因积分抵扣",
+            "txt": "dd",
             "on": true,
-            "ftp": false
+            "ftp": false,
+            "design": "dd",
+            "dev": "jsonchou"
+        }, {
+            "name": "20180913",
+            "on": true,
+            "txt": "dd",
+            "design": "dd",
+            "dev": "jsonchou"
+        }, {
+            "name": "xx",
+            "on": true,
+            "txt": "dd",
+            "design": "dd",
+            "dev": "jsonchou"
         }],
         "react": [{
             "name": "20171222",
@@ -89,6 +103,12 @@ module.exports = {
             "name": "stdRedux",
             "on": false,
             "ftp": false
+        }, {
+            "name": "20180913",
+            "on": true,
+            "txt": "dd",
+            "design": "",
+            "dev": "jsonchou"
         }],
         "common": [{
             "name": "20171016",

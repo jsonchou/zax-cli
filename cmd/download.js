@@ -4,25 +4,26 @@
 const path = require('path')
 const notifier = require('node-notifier');
 const Ora = require('ora');
-const execSync = require('child_process').execSync;
+const exec = require('child_process').exec;
 
-module.exports = async function () {
+class DOWNLOAD {
+    constructor(args) {
+        
+    }
+    cmd() {
+        const spinner = new Ora({
+            text: 'Download zax-package',
+            spinner: "dots"
+        });
 
-    const spinner = new Ora({
-        text: 'Download zax-package',
-        spinner: "dots"
-    });
+        spinner.start();
 
-    spinner.start();
+        exec('npm i zax-package -D')
 
-    execSync('npm i zax-package -D')
-
-    setTimeout(() => {
-        spinner.color = 'blue';
-    }, 1000);
-
-    setTimeout(() => {
-        spinner.succeed('Download Done');
-    }, 2000);
-
+        setTimeout(() => {
+            spinner.succeed('Download zax-package, Done');
+        }, 1000);
+    }
 }
+
+module.exports = DOWNLOAD

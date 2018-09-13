@@ -16,7 +16,7 @@ const serverPathPrefix = '/www/website/assets/subject';//服务器路径地址
 
 const subPath = process.cwd()
 
-let spinner
+let spinner;
 
 class UPLOAD {
     constructor(config, assets, env) {
@@ -39,7 +39,7 @@ class UPLOAD {
             }).connect(this.devConfig.server[this.env]);
         });
     }
-    async upload() {
+    async cmd() {
 
         spinner = new Ora({
             text: `Uploading assets ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}`,
@@ -87,7 +87,7 @@ class UPLOAD {
                 })
 
                 setTimeout(() => {
-                    spinner.succeed(`Upload assets ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)} done`);
+                    spinner.succeed(`Upload assets ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done`);
                 }, 1000)
 
             });

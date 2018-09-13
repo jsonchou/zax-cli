@@ -35,5 +35,8 @@
     "homepage": "https://github.com/jsonchou/zax-cli",
     "author": "jsonchou",
     "license": "MIT",
-    "private": false
+    "private": false,
+    "devDependencies": {
+        "zax-package": "0.0.3"
+    }
 }

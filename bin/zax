@@ -16,10 +16,12 @@ program
     .usage('<command> [options]')
 
 program
-    .command('init')
-    .description('init a spa project from [vue|react|preact|common]')
+    .command('create')
+    .description('create a spa project from [vue|react|preact|common]')
     .action(function () {
-        require('../cmd/init')()
+        let CREATE = require('../cmd/create');
+        let spa = new CREATE();
+        spa.cmd();
     })
 
 program
@@ -49,7 +51,7 @@ program
 
         let UPLOAD = require('../cmd/upload')
         let uploader = new UPLOAD(config, res, env);
-        uploader.upload();
+        uploader.cmd();
 
     })
 
@@ -57,7 +59,9 @@ program
     .command('download')
     .description('download skeleton package')
     .action(function () {
-        require('../cmd/download')()
+        let DOWNLOAD = require('../cmd/download');
+        let download = new DOWNLOAD()
+        download.cmd();
     })
 
 if (!process.argv.slice(2).length) {
