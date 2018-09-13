@@ -1,0 +1,85 @@
+#!/usr/bin/env node
+
+'use strict';
+const path = require('path')
+const program = require('commander')
+
+const chalk = require('chalk')
+const execSync = require('child_process').execSync;
+
+const subPath = process.cwd()
+const basePath = path.join(subPath, 'build/config.js')
+const config = require(basePath)
+
+program
+    .version(require('../package').version)
+    .usage('<command> [options]')
+
+program
+    .command('init')
+    .description('init a spa project from [vue|react|preact|common]')
+    .action(function () {
+        require('../cmd/init')()
+    })
+
+program
+    .command('upload <assets>')
+    .description('upload assets to server')
+    .alias('u')
+
+    .option('-p, --production', 'set env of production')
+    .option('-d, --development', 'set env of development')
+
+    .action(function (assets, options) {
+        const assetsArr = ['all', 'js', 'scripts', 'css', 'styles', 'img', 'images'];
+        if (!assetsArr.includes(assets)) {
+            console.log(`you should upload you assets as ${assetsArr.join(',')}`);
+            return;
+        }
+
+        let assetsMap = {
+            js: "scripts",
+            css: 'styles',
+            img: 'images'
+        }
+        let res = assetsMap[assets];
+        !res && (res = assets)
+
+        let env = options.production == true ? 'production' : 'development'
+
+        let UPLOAD = require('../cmd/upload')
+        let uploader = new UPLOAD(config, res, env);
+        uploader.upload();
+
+    })
+
+program
+    .command('download')
+    .description('download skeleton package')
+    .action(function () {
+        require('../cmd/download')()
+    })
+
+if (!process.argv.slice(2).length) {
+    program.outputHelp()
+}
+
+// output help information on unknown commands
+program
+    .arguments('<command>')
+    .action((cmd) => {
+        program.outputHelp()
+        console.log(`  ` + chalk.red(`Unknown command ${chalk.yellow(cmd)}.`))
+        console.log()
+    })
+
+// add some useful info on help
+program.on('--help', () => {
+    console.log()
+    console.log(`  Run ${chalk.cyan(`zax <command> --help`)} for detailed usage of given command.`)
+    console.log()
+})
+
+program.commands.forEach(c => c.on('--help', () => console.log()))
+
+program.parse(process.argv);
