@@ -4,7 +4,7 @@
 
 ```bash
 $ npm i -g zax-cli
-$ cd your-spa-directory
+$ cd your-spa-parent-directory
 $ zax init
 ```
 
