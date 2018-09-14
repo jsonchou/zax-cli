@@ -13,19 +13,29 @@ const config = require(basePath)
 
 program
     .version(require('../package').version)
-    .usage('<command> [options]')
+    
+
+program
+    .command('list')
+    .description('list all of active projects')
+    .action(function () {
+        let LIST = require('../cmd/list');
+        let list = new LIST();
+        list.cmd();
+    })
 
 program
     .command('create')
     .description('create a spa project from [vue|react|preact|common]')
     .action(function () {
         let CREATE = require('../cmd/create');
-        let spa = new CREATE();
-        spa.cmd();
+        let create = new CREATE();
+        create.cmd();
     })
 
 program
     .command('upload <assets>')
+    .usage('<command> <assets> [options]')
     .description('upload assets to server')
     .alias('u')
 

@@ -24,6 +24,28 @@ class UPLOAD {
         this.assets = assets;
         this.env = env;
         // console.log(config, assets, env, 123)
+
+        if (env === 'development') {
+            this._genCliBox(env, 'green')
+
+        } else if (env === 'production') {
+            this._genCliBox(env + ' ', 'red')
+        }
+
+        console.log();
+        console.log();
+
+    }
+    async _genCliBox(env, color) {
+        console.log(chalk[color]('-'.repeat(30)))
+        console.log(chalk[color]('|' + (' '.repeat(28)) + '|'))
+        console.log(chalk[color]('|' + (' '.repeat(28)) + '|'))
+        console.log(chalk[color]('|' + (' '.repeat(28)) + '|'))
+        console.log(chalk[color]('|'.repeat(1)) + (' '.repeat(8)) + chalk[color].bold(env) + (' '.repeat(9)) + chalk[color]('|'.repeat(1)))
+        console.log(chalk[color]('|' + (' '.repeat(28)) + '|'))
+        console.log(chalk[color]('|' + (' '.repeat(28)) + '|'))
+        console.log(chalk[color]('|' + (' '.repeat(28)) + '|'))
+        console.log(chalk[color]('-'.repeat(30)))
     }
     async connectServer() { // 连接服务器
         return new Promise((resolve, reject) => {
