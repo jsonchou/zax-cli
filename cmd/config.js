@@ -9,7 +9,7 @@ const subPath = process.cwd()
 const basePath = path.join(subPath, 'build/config.js')
 const config = require(basePath)
 
-class LIST {
+class CONFIG {
     constructor(args) {
 
     }
@@ -25,4 +25,4 @@ class LIST {
     }
 }
 
-module.exports = LIST
+module.exports = CONFIG

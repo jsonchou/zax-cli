@@ -63,9 +63,9 @@ let projects = [{
     type: 'input',
     name: 'pm',
     message: "需求方：",
-    validate: function (value) {
-        if (value) {
-            return true
+    validate(val) {
+        if (val.trim()) {
+            return true;
         }
         return '需求方必填'
     }
@@ -73,8 +73,8 @@ let projects = [{
     type: 'input',
     name: 'projectDesc',
     message: "需求描述：",
-    validate: function (value) {
-        if (value) {
+    validate(val) {
+        if (val.trim()) {
             return true;
         }
         return '需求描述必填'
@@ -84,8 +84,8 @@ let projects = [{
     name: 'developers',
     message: "开发：",
     default: gitUser().name,
-    validate(val){
-        if(val){
+    validate(val) {
+        if (val.trim()) {
             return true;
         }
         return 'Please input a valid developer';

@@ -3,13 +3,15 @@
 'use strict';
 
 const fs = require('fs-extra');
-const path = require('path');
-const Client = require('ssh2').Client;
 const http = require('http');
+const path = require('path');
+const inquirer = require('inquirer')
+const Client = require('ssh2').Client;
 const glob = require("glob")
 const chalk = require('chalk')
-
 const Ora = require('ora');
+
+const rainbow = require('../libs/rainbow')
 
 const conn = new Client();
 const serverPathPrefix = '/www/website/assets/subject';//服务器路径地址
@@ -18,6 +20,12 @@ const subPath = process.cwd()
 
 let spinner;
 
+let reconfirm = [{
+    type: 'confirm',
+    name: 'continue',
+    message: 'Oh boy, you are playing with fire, do you really want upload your assets to production environment by ZAX CLI ?',
+    default: false
+}]
 class UPLOAD {
     constructor(config, assets, env) {
         this.devConfig = config || {};
@@ -47,6 +55,10 @@ class UPLOAD {
         console.log(chalk[color]('|' + (' '.repeat(28)) + '|'))
         console.log(chalk[color]('-'.repeat(30)))
     }
+    async _preFetchHtml() {
+        // clear redis cache
+        http.get('')
+    }
     async connectServer() { // 连接服务器
         return new Promise((resolve, reject) => {
             conn.on('ready', () => {
@@ -58,11 +70,10 @@ class UPLOAD {
                 });
             }).on('error', (err) => {
                 reject(err);
-            }).connect(this.devConfig.server[this.env]);
+            }).connect(this.devConfig.ftp[this.env]);
         });
     }
-    async cmd() {
-
+    async _upload() {
         spinner = new Ora({
             text: `Uploading assets ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}`,
             spinner: process.argv[2]
@@ -76,7 +87,6 @@ class UPLOAD {
         let openPorjects = this.devConfig.list[spa].filter(item => item.on == true);
 
         if (openPorjects.length) {
-
             openPorjects.map(async project => {
 
                 let spaRoot = path.join(subPath, `${spa}/${project.name}`);
@@ -117,6 +127,23 @@ class UPLOAD {
             console.log(`  ` + chalk.red(`No open ${chalk.yellow(this.devConfig.spa)} project.`))
             console.log()
         }
+    }
+    async cmd() {
+        if (this.env === 'production') {
+            inquirer.prompt(reconfirm).then(res => {
+                if (res.continue) {
+                    this._upload()
+                    rainbow(`Your ${this.devConfig.spa} assets ${this.assets} has been uploaded to ${this.env} environment`);
+                } else {
+                    console.log(chalk.green('Nice, your operation has been canceled~'))
+                    process.exit()
+                }
+            });
+        } else {
+            this._upload()
+        }
+
+
     }
 }
 

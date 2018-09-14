@@ -13,20 +13,22 @@ const config = require(basePath)
 
 program
     .version(require('../package').version)
-    
 
 program
-    .command('list')
-    .description('list all of active projects')
-    .action(function () {
-        let LIST = require('../cmd/list');
-        let list = new LIST();
-        list.cmd();
+    .command('info')
+    .description('Show all config information')
+    .option('-f, --ftp', 'Get ftp information')
+    .option('-s, --spa', 'Get current spa type')
+    .option('-l, --list', 'List all of active projects')
+    .action(function (options) {
+        let INFO = require('../cmd/info');
+        let info = new INFO(options);
+        info.cmd();
     })
 
 program
     .command('create')
-    .description('create a spa project from [vue|react|preact|common]')
+    .description('Create a spa project from [vue|react|preact|common]')
     .action(function () {
         let CREATE = require('../cmd/create');
         let create = new CREATE();
@@ -36,7 +38,7 @@ program
 program
     .command('upload <assets>')
     .usage('<command> <assets> [options]')
-    .description('upload assets to server')
+    .description('Upload assets to server')
     .alias('u')
 
     .option('-p, --production', 'set env of production')
@@ -67,7 +69,7 @@ program
 
 program
     .command('download')
-    .description('download skeleton package')
+    .description('Download skeleton package')
     .action(function () {
         let DOWNLOAD = require('../cmd/download');
         let download = new DOWNLOAD()
