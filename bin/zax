@@ -15,15 +15,16 @@ program
     .version(require('../package').version)
 
 program
-    .command('info')
+    .command('config')
     .description('Show all config information')
     .option('-f, --ftp', 'Get ftp information')
     .option('-s, --spa', 'Get current spa type')
     .option('-l, --list', 'List all of active projects')
+    .option('-a, --all', 'List all of configuration')
     .action(function (options) {
-        let INFO = require('../cmd/info');
-        let info = new INFO(options);
-        info.cmd();
+        let CONFIG = require('../cmd/config');
+        let config = new CONFIG(options);
+        config.cmd();
     })
 
 program

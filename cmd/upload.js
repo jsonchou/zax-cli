@@ -55,9 +55,47 @@ class UPLOAD {
         console.log(chalk[color]('|' + (' '.repeat(28)) + '|'))
         console.log(chalk[color]('-'.repeat(30)))
     }
-    async _preFetchHtml() {
+    async _preFetchHtml(project, config) {
         // clear redis cache
-        http.get('')
+        if (config.machine.indexOf('test') > -1) {
+            return;
+        }
+        http.get(`https://evt${machine}.zhongan.com/${this.devConfig.spa.charAt(0)}/${project.name}/?force=true&v=${Date.now()}&bizOrigin=fromSystemForceUpdate`)
+    }
+    async _checkSpaProject() {
+        let spa = this.devConfig.spa;
+        let openProjects = this.devConfig.list[spa].filter(item => item.on == true);
+
+        let _tinyEvt = async (file) => {
+            return new Promise((resolve, reject) => {
+                let res = fs.existsSync(spaRootHtml);
+                if (res) {
+                    resolve(true)
+                } else {
+                    reject(false)
+                }
+            })
+        }
+
+        return new Promise(async (resolve, reject) => {
+            if (openProjects.length) {
+                let proms = [];
+                openProjects.map(async project => {
+                    let spaRootHtml = path.join(subPath, `${spa}/${project.name}/index.html`);
+                    proms.push(_tinyEvt(spaRootHtml));
+                })
+                let res = await Promise.all(proms);
+                if (res.some(item => item == true)) {
+                    resolve(true)
+                } else {
+                    resolve(false)
+                }
+            } else {
+                console.log(`  ` + chalk.red(`No open ${chalk.yellow(this.devConfig.spa)} project.`))
+                console.log()
+                reject(false)
+            }
+        })
     }
     async connectServer() { // 连接服务器
         return new Promise((resolve, reject) => {
@@ -73,6 +111,25 @@ class UPLOAD {
             }).connect(this.devConfig.ftp[this.env]);
         });
     }
+    async _singleUpload(file, serverFile) {
+        return new Promise((resolve, reject) => {
+            let serverDir = serverFile.slice(0, serverFile.lastIndexOf('/') + 1);
+            try {
+                conn.exec(`mkdir -p ${serverDir}`, function (err, res) {
+                    try {
+                        sftp.fastPut(file, serverFile, {}, (err, res) => {
+                            // console.log(sub, serverFile, 'done fastPut')
+                            resolve('done');
+                        })
+                    } catch (err) {
+                        throw new Error('fastPut', err)
+                    }
+                })
+            } catch (err) {
+                throw new Error('mkdir', err)
+            }
+        })
+    }
     async _upload() {
         spinner = new Ora({
             text: `Uploading assets ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}`,
@@ -84,48 +141,54 @@ class UPLOAD {
         //创建sftp
         let sftp = await this.connectServer();
         let spa = this.devConfig.spa;
-        let openPorjects = this.devConfig.list[spa].filter(item => item.on == true);
 
-        if (openPorjects.length) {
-            openPorjects.map(async project => {
+        let hasSpa = await this._checkSpaProject();
+        console.log(hasSpa, 1111)
+        return;
+        if (hasSpa) {
+            let openProjects = this.devConfig.list[spa].filter(item => item.on == true);
 
-                let spaRoot = path.join(subPath, `${spa}/${project.name}`);
+            if (openProjects.length) {
+                openProjects.map(async project => {
 
-                let files = [];
+                    let spaRoot = path.join(subPath, `${spa}/${project.name}`);
 
-                if (this.assets === 'all') {
-                    files = glob.sync(path.join(spaRoot, 'assets/!(_src)/**/*'));
-                } else {
-                    files = glob.sync(path.join(spaRoot, `assets/${this.assets}/**/*`));
-                    //额外上传首页
-                }
+                    let files = [];
 
-                files.push(path.join(spaRoot, `index.html`));
+                    if (this.assets === 'all') {
+                        files = glob.sync(path.join(spaRoot, 'assets/!(_src)/**/*'));
+                    } else {
+                        files = glob.sync(path.join(spaRoot, `assets/${this.assets}/**/*`));
+                    }
 
-                files.sort((a, b) => a < b).map(async sub => {
-                    fs.lstat(sub, (err, stats) => {
-                        if (stats && stats.isFile()) {
-                            let serverFile = serverPathPrefix + sub.slice(path.join(subPath).length);
-                            let serverDir = serverFile.slice(0, serverFile.lastIndexOf('/') + 1);
+                    if (this.assets !== 'images') {
+                        files.push(path.join(spaRoot, `index.html`));
+                    }
 
-                            conn.exec(`mkdir -p ${serverDir}`, function (err, res) {
-                                sftp.fastPut(sub, serverFile, {}, (err, res) => {
-                                    // console.log(sub, serverFile, 'done fastPut')
-                                })
-                            })
+                    let proms = [];
 
+                    files.sort((a, b) => a < b).map(async sub => {
+                        try {
+                            let stats = fs.lstatSync(sub)
+                            if (stats && stats.isFile()) {
+                                let serverFile = serverPathPrefix + sub.slice(path.join(subPath).length);
+                                proms.push(this._singleUpload(sub, serverFile))
+                            }
+                        } catch (err) {
+                            throw new Error('lstatSync', err)
                         }
                     })
-                })
 
-                setTimeout(() => {
-                    spinner.succeed(`Upload assets ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done`);
-                }, 1000)
+                    let ftpRes = await Promise.all(proms);
 
-            });
-        } else {
-            console.log(`  ` + chalk.red(`No open ${chalk.yellow(this.devConfig.spa)} project.`))
-            console.log()
+                    let projectConfigFile = require(path.join(spaRoot, 'api/config'));
+
+                    this._preFetchHtml(project, projectConfigFile)
+
+                    spinner.succeed(`Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done`);
+
+                });
+            }
         }
     }
     async cmd() {
@@ -142,7 +205,6 @@ class UPLOAD {
         } else {
             this._upload()
         }
-
 
     }
 }

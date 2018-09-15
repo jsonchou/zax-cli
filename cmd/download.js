@@ -22,7 +22,7 @@ class DOWNLOAD {
 
         setTimeout(() => {
             spinner.succeed('Download zax-package, Done');
-        }, 2000);
+        }, 2500);
     }
 }
 
