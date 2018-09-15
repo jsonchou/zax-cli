@@ -3,7 +3,7 @@
 'use strict';
 
 const fs = require('fs-extra');
-const http = require('http');
+const request = require('request');
 const path = require('path');
 const inquirer = require('inquirer')
 const Client = require('ssh2').Client;
@@ -60,7 +60,11 @@ class UPLOAD {
         if (config.machine.indexOf('test') > -1) {
             return;
         }
-        http.get(`https://evt${machine}.zhongan.com/${this.devConfig.spa.charAt(0)}/${project.name}/?force=true&v=${Date.now()}&bizOrigin=fromSystemForceUpdate`)
+        try {
+            request.get(`https://evt${machine}.zhongan.com/${this.devConfig.spa.charAt(0)}/${project.name}/?force=true&v=${Date.now()}&bizOrigin=fromSystemForceUpdate`)
+        } catch (err) {
+            throw new Error(err);
+        }
     }
     async _checkSpaProject() {
         let spa = this.devConfig.spa;
