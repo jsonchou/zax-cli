@@ -4,9 +4,13 @@
 
 ```bash
 $ npm i -g zax-cli
-$ cd your-spa-parent-directory
-$ zax init
 ```
 
 ## Usage:
-
+```bash
+$ cd your-spa-parent-directory
+$ zax download
+$ zax upload <assets> [options]
+$ zax create
+$ zax config [options]
+```
