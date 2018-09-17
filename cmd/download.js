@@ -21,7 +21,7 @@ class DOWNLOAD {
         exec('npm i zax-package -D')
 
         setTimeout(() => {
-            spinner.succeed('Download zax-package, Done');
+            spinner.succeed('Download zax-package, done!');
         }, 2500);
     }
 }

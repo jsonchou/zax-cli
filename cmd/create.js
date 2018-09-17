@@ -266,7 +266,7 @@ class CREATE {
                 await this.handle()
 
                 setTimeout(() => {
-                    spinner.succeed(`CREATE ${spa} ${activityCode}, Done`);
+                    spinner.succeed(`CREATE ${spa} ${activityCode}, done!`);
                 }, 1000)
 
             });

@@ -80,7 +80,7 @@ class UPLOAD {
             return new Promise((resolve, reject) => {
                 let res = fs.existsSync(file);
                 if (res == false) {
-                    console.log(`You have no ${name} in your ${spa} porjects, or you can make it off in your configuration file`)
+                    console.log(`You have no ${chalk.yellow(spa + '/' + name)} porject, you can make it off in your configuration file, or you can run ${chalk.green('zax create')} to get a new ${spa}/${name} project`)
                     process.exit();
                 }
                 resolve(res)
@@ -124,7 +124,6 @@ class UPLOAD {
                 conn.exec(`mkdir -p ${serverDir}`, function (err, res) {
                     try {
                         sftp.fastPut(file, serverFile, {}, (err, res) => {
-                            // console.log(sub, serverFile, 'done fastPut')
                             resolve('done');
                         })
                     } catch (err) {
