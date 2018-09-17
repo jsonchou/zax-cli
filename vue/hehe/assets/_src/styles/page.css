@@ -1,0 +1,28 @@
+* { box-sizing: border-box; } 
+body,
+html { color: #333; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent } 
+a,
+input,
+button { outline: none } 
+img { vertical-align: middle } 
+.pg-fx { padding-bottom: 8rem } 
+.ui-confirm .ok { color: #f72424 } 
+.sj-temp { position: fixed; z-index: 1000; width: 100%; height: 100%; animation: temp 0.05s forwards; -webkit-animation: temp 0.05s forwards; } 
+@-webkit-keyframes temp { 
+ 0% { opacity: 1; } 
+ 100% { opacity: 0; z-index: -1; display: none; } 
+ }
+@keyframes temp { 
+ 0% { opacity: 1; } 
+ 100% { opacity: 0; z-index: -1; display: none; } 
+ }
+.sj-temp img { width: 100%; height: 100%; } 
+.subject-header { height: 7rem; position: relative; background-color: rgba(0, 0, 0, 0.5); width: 7rem; position: fixed; left: 2rem; top: 2rem; z-index: 100; border-radius: 50% } 
+.subject-header .arrow-back { height: 7rem; width: 7rem; position: relative; display: inline-block } 
+.subject-header .arrow-back:after { position: absolute; content: ' '; width: 2.5rem; height: 2.5rem; border-top: 0.4rem #fff solid; border-left: 0.4rem #fff solid; transform: rotateZ(-45deg); -webkit-transform: rotateZ(-45deg); left: 3rem; top: 2rem } 
+.template-weixin-mask { position: fixed; right: 0; top: 0; height: 100%; width: 100%; z-index: -1; display: none } 
+.template-weixin-mask img { width: 42.3rem; height: 27.3rem; float: right; margin: 4rem 4rem 0 0 } 
+.template-weixin-mask-on { display: block; z-index: 999 } 
+.template-loading { z-index: 10000; position: fixed; left: 0; top: 0; width: 100%; height: 100%; background-color: #fff } 
+.template-loading .loading-logo { background: url(https://static.zhongan.com/website/other/html/actBox/images/ab/loading.gif) no-repeat center center; background-size: 14rem 14rem; width: 14rem; height: 14rem; -webkit-transform: translate3d(-50%, -50%, 0); transform: translate3d(-50%, -50%, 0); left: 50%; top: 50%; position: absolute } 
+.md-popup { opacity: 0; position: fixed; top: 50%; left: 50%; z-index: -1; box-sizing: border-box; padding-top: 22rem; width: 59.4rem; height: 73rem; -webkit-transform: translate(-50%, -50%); transform: translate(-50%, -50%); border-radius: 1rem; -webkit-transition: all ease 0.5s; transition: all ease 0.5s; background: no-repeat; background-size: 100% } 

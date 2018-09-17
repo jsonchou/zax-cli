@@ -18,8 +18,6 @@ const serverPathPrefix = '/www/website/assets/subject';//服务器路径地址
 
 const subPath = process.cwd()
 
-let spinner;
-
 let reconfirm = [{
     type: 'confirm',
     name: 'continue',
@@ -57,27 +55,35 @@ class UPLOAD {
     }
     async _preFetchHtml(project, config) {
         // clear redis cache
-        if (config.machine.indexOf('test') > -1) {
-            return;
-        }
-        try {
-            request.get(`https://evt${machine}.zhongan.com/${this.devConfig.spa.charAt(0)}/${project.name}/?force=true&v=${Date.now()}&bizOrigin=fromSystemForceUpdate`)
-        } catch (err) {
-            throw new Error(err);
-        }
+        return new Promise((resolve, reject) => {
+            if (config.machine.indexOf('test') > -1) {
+                reject(false)
+                return;
+            }
+            try {
+                let url = `https://evt${config.machine}.zhongan.com/${this.devConfig.spa.charAt(0)}/${project.name}/?force=true&v=${Date.now()}&bizOrigin=fromSystemForceUpdate`;
+                // console.log(url, 'prefectchhtml')
+                request.get(url).on('response', res => {
+                    resolve('done');
+                })
+            } catch (err) {
+                reject(err)
+                throw new Error(err);
+            }
+        })
     }
     async _checkSpaProject() {
         let spa = this.devConfig.spa;
         let openProjects = this.devConfig.list[spa].filter(item => item.on == true);
 
-        let _tinyEvt = async (file) => {
+        let _tinyEvt = async (file, name) => {
             return new Promise((resolve, reject) => {
-                let res = fs.existsSync(spaRootHtml);
-                if (res) {
-                    resolve(true)
-                } else {
-                    reject(false)
+                let res = fs.existsSync(file);
+                if (res == false) {
+                    console.log(`You have no ${name} in your ${spa} porjects, or you can make it off in your configuration file`)
+                    process.exit();
                 }
+                resolve(res)
             })
         }
 
@@ -85,15 +91,11 @@ class UPLOAD {
             if (openProjects.length) {
                 let proms = [];
                 openProjects.map(async project => {
-                    let spaRootHtml = path.join(subPath, `${spa}/${project.name}/index.html`);
-                    proms.push(_tinyEvt(spaRootHtml));
+                    let spaRootHtml = path.join(subPath, `${spa}/${project.name}`);
+                    proms.push(_tinyEvt(spaRootHtml, project.name));
                 })
                 let res = await Promise.all(proms);
-                if (res.some(item => item == true)) {
-                    resolve(true)
-                } else {
-                    resolve(false)
-                }
+                resolve(res)
             } else {
                 console.log(`  ` + chalk.red(`No open ${chalk.yellow(this.devConfig.spa)} project.`))
                 console.log()
@@ -115,7 +117,7 @@ class UPLOAD {
             }).connect(this.devConfig.ftp[this.env]);
         });
     }
-    async _singleUpload(file, serverFile) {
+    async _singleUpload(sftp, file, serverFile) {
         return new Promise((resolve, reject) => {
             let serverDir = serverFile.slice(0, serverFile.lastIndexOf('/') + 1);
             try {
@@ -135,81 +137,91 @@ class UPLOAD {
         })
     }
     async _upload() {
-        spinner = new Ora({
-            text: `Uploading assets ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}`,
-            spinner: process.argv[2]
-        });
 
-        spinner.start();
+        return new Promise(async (resolve, reject) => {
+            //创建sftp
+            let sftp = await this.connectServer();
+            let spa = this.devConfig.spa;
 
-        //创建sftp
-        let sftp = await this.connectServer();
-        let spa = this.devConfig.spa;
+            let hasSpa = await this._checkSpaProject();
+            if (hasSpa) {
+                let openProjects = this.devConfig.list[spa].filter(item => item.on == true);
+                if (openProjects.length) {
+                    openProjects.map(async project => {
 
-        let hasSpa = await this._checkSpaProject();
-        console.log(hasSpa, 1111)
-        return;
-        if (hasSpa) {
-            let openProjects = this.devConfig.list[spa].filter(item => item.on == true);
+                        let spinner = new Ora({
+                            text: `Uploading assets ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}`,
+                            spinner: process.argv[2]
+                        });
 
-            if (openProjects.length) {
-                openProjects.map(async project => {
+                        spinner.start();
 
-                    let spaRoot = path.join(subPath, `${spa}/${project.name}`);
+                        let spaRoot = path.join(subPath, `${spa}/${project.name}`);
 
-                    let files = [];
+                        let files = [];
 
-                    if (this.assets === 'all') {
-                        files = glob.sync(path.join(spaRoot, 'assets/!(_src)/**/*'));
-                    } else {
-                        files = glob.sync(path.join(spaRoot, `assets/${this.assets}/**/*`));
-                    }
-
-                    if (this.assets !== 'images') {
-                        files.push(path.join(spaRoot, `index.html`));
-                    }
-
-                    let proms = [];
-
-                    files.sort((a, b) => a < b).map(async sub => {
-                        try {
-                            let stats = fs.lstatSync(sub)
-                            if (stats && stats.isFile()) {
-                                let serverFile = serverPathPrefix + sub.slice(path.join(subPath).length);
-                                proms.push(this._singleUpload(sub, serverFile))
-                            }
-                        } catch (err) {
-                            throw new Error('lstatSync', err)
+                        if (this.assets === 'all') {
+                            files = glob.sync(path.join(spaRoot, 'assets/!(_src)/**/*'));
+                        } else {
+                            files = glob.sync(path.join(spaRoot, `assets/${this.assets}/**/*`));
                         }
-                    })
 
-                    let ftpRes = await Promise.all(proms);
+                        if (this.assets !== 'images') {
+                            files.push(path.join(spaRoot, `index.html`));
+                        }
 
-                    let projectConfigFile = require(path.join(spaRoot, 'api/config'));
+                        let proms = [];
 
-                    this._preFetchHtml(project, projectConfigFile)
+                        files.sort((a, b) => a < b).map(async sub => {
+                            try {
+                                let stats = fs.lstatSync(sub)
+                                if (stats && stats.isFile()) {
+                                    let serverFile = serverPathPrefix + sub.slice(path.join(subPath).length);
+                                    proms.push(this._singleUpload(sftp, sub, serverFile))
+                                }
+                            } catch (err) {
+                                throw new Error('lstatSync', err)
+                            }
+                        })
 
-                    spinner.succeed(`Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done`);
+                        let ftpRes = await Promise.all(proms);
 
-                });
+                        let projectConfigFile = require(path.join(spaRoot, 'api/config'));
+
+                        await this._preFetchHtml(project, projectConfigFile)
+
+                        if (this.env !== 'production') {
+                            spinner.succeed(`Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done!`);
+                        }
+
+                        resolve('upload done')
+
+                    });
+                }
+            } else {
+                console.log(`No prjects here, you should run [${chalk.bold.yellow('zax create')}] command to init your project`)
+                reject('No prjects here')
             }
-        }
+        })
+
+
     }
     async cmd() {
         if (this.env === 'production') {
-            inquirer.prompt(reconfirm).then(res => {
+            inquirer.prompt(reconfirm).then(async res => {
                 if (res.continue) {
-                    this._upload()
+                    await this._upload()
                     rainbow(`Your ${this.devConfig.spa} assets ${this.assets} has been uploaded to ${this.env} environment`);
+                    process.exit()
                 } else {
                     console.log(chalk.green('Nice, your operation has been canceled~'))
                     process.exit()
                 }
             });
         } else {
-            this._upload()
+            await this._upload()
+            process.exit()
         }
-
     }
 }
 
