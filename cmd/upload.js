@@ -83,7 +83,7 @@ class UPLOAD {
             return new Promise((resolve, reject) => {
                 let res = fs.existsSync(file);
                 if (res == false) {
-                    console.log(`You have no ${chalk.yellow(spa + '/' + name)} porject, you can make it off in your configuration file, or you can run ${chalk.green('zax create')} to get a new ${spa}/${name} project`)
+                    console.log(`You have no ${chalk.yellow(spa + '/' + name)} porject, you can turn it on in your configuration file, or you can run ${chalk.yellow('zax create')} to get a new ${spa}/${name} project`)
                     process.exit();
                 }
                 resolve(res)
@@ -100,9 +100,8 @@ class UPLOAD {
                 let res = await Promise.all(proms);
                 resolve(res)
             } else {
-                console.log(`  ` + chalk.red(`No open ${chalk.yellow(this.devConfig.spa)} project.`))
-                console.log()
-                reject(false)
+                console.log(`You have no open porject, you can turn it on in your configuration file, or you can run ${chalk.yellow('zax create')} to get a new project`)
+                process.exit();
             }
         })
     }
@@ -120,40 +119,73 @@ class UPLOAD {
             }).connect(this.devConfig.ftp[this.env]);
         });
     }
-    async _singleUpload(spinner, sftp, file, serverFile) {
+    async _singleUpload(sftp, file, serverFile) {
 
         return new Promise((resolve, reject) => {
             let serverDir = serverFile.slice(0, serverFile.lastIndexOf('/') + 1);
             try {
-                conn.exec(`mkdir -p ${serverDir}`, function (err, stream) {
+                conn.exec(`mkdir -p ${serverDir}`, (err, stream) => {
 
-                    if (err) {
-                        // console.log('conn.exec mkdir', err)
-                        // throw err;
+                    // if (err) {
+                    // console.log('conn.exec mkdir', err)
+                    // return sftp.end();
+                    // throw err;
+                    // }
+
+                    let _unitUplod = () => {
+                        try {
+
+                            sftp.fastPut(file, serverFile, { concurrency: 64 }, (err, res) => {
+                                console.log(serverFile.replace(serverPathPrefix, ''))
+                                resolve('done')
+                                // sftp.end();
+                            })
+
+                            // let readStream = fs.createReadStream(file);
+                            // let writeStream = sftp.createWriteStream(serverFile, { flags: 'w' });
+                            // writeStream.on('close', () => {
+                            //     // console.log(serverFile.replace(serverPathPrefix, ''))
+                            //     // readStream.destroy();
+                            //     // writeStream.destroy();
+                            //     // return resolve('done')
+                            // }).on('end', () => {
+                            //     console.log('ftp end')
+                            //     conn.close();
+                            // }).on('error', (err) => {
+                            //     console.log('sftp put err:', err);
+                            // }).on('finish', () => {
+                            //     // console.log('sftp put finish:');
+                            //     console.log('done', serverFile.replace(serverPathPrefix, ''))
+                            //     readStream.destroy();
+                            //     writeStream.destroy();
+                            //     resolve('done')
+                            // })
+                            // readStream.pipe(writeStream, (err, res) => {
+                            //     console.log(err, res, 321)
+                            // });
+
+
+                        } catch (err) {
+                            throw new Error('fastPut', err)
+                        }
                     }
 
                     if (stream) {
                         stream.on('close', function (code, signal) {
                             // console.log('Stream :: close :: code: ' + code + ', signal: ' + signal);
-                            try {
-                                sftp.fastPut(file, serverFile, {}, (err, res) => {
-                                    // console.log(file, serverFile, res, 123);
-                                    sftp.end();
-                                    resolve('done')
-                                })
-                            } catch (err) {
-                                throw new Error('fastPut', err)
-                            }
-
+                            // console.log('stream close if')
+                            _unitUplod();
                             // conn.end();
                         }).on('data', function (data) {
                             console.log('STDOUT: ' + data);
                         }).stderr.on('data', function (data) {
                             console.log('STDERR: ' + data);
                         });
+                    } else {
+                        // console.log('stream else')
+                        _unitUplod();
+                        // reject('no stream', stream)
                     }
-
-                    // return;
 
                 })
             } catch (err) {
@@ -163,10 +195,11 @@ class UPLOAD {
     }
     async _upload() {
 
+        sftp = await this.connectServer();
+        let spa = this.devConfig.spa;
+
         return new Promise(async (resolve, reject) => {
             //创建sftp
-            sftp = await this.connectServer();
-            let spa = this.devConfig.spa;
 
             let hasSpa = await this._checkSpaProject();
             if (hasSpa) {
@@ -176,7 +209,8 @@ class UPLOAD {
                     let spinner = new Ora();
                     openProjects.map(async (project, index) => {
 
-                        spinner.text = `Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}`;
+                        // spinner.text = `Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}\r\n`;
+                        // spinner.start();
 
                         let spaRoot = path.join(subPath, `${spa}/${project.name}`);
 
@@ -194,30 +228,28 @@ class UPLOAD {
 
                         let proms = [];
 
-                        files.sort((a, b) => a < b).map(async sub => {
+                        files.sort((a, b) => a > b).map(async sub => {
                             try {
                                 let stats = fs.lstatSync(sub)
                                 if (stats && stats.isFile()) {
                                     let serverFile = serverPathPrefix + sub.slice(path.join(subPath).length);
-                                    proms.push(this._singleUpload(spinner, sftp, sub, serverFile))
+                                    proms.push(this._singleUpload(sftp, sub, serverFile))
                                 }
                             } catch (err) {
                                 throw new Error('lstatSync', err)
                             }
                         })
 
-                        spinner.start();
+                        await Promise.all(proms).catch(err => {
+                            console.log(err, 'Promise.all')
+                        });
 
-                        let ftpRes = await Promise.all(proms);
-
+                        sftp.end();
                         let projectConfigFile = require(path.join(spaRoot, 'api/config'));
-
-                        await this._preFetchHtml(project, projectConfigFile)
-
+                        // this._preFetchHtml(project, projectConfigFile)
                         if (this.env !== 'production') {
-                            spinner.succeed(`Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done!`);
+                            spinner.succeed(`Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done!\r\n`);
                         }
-
                         resolve('upload done')
 
                     });
@@ -238,7 +270,7 @@ class UPLOAD {
                     rainbow(`Your ${this.devConfig.spa} assets of ${this.assets} has been uploaded to ${this.env} environment`);
                     setTimeout(() => {
                         process.exit()
-                    }, 3000)
+                    }, 2000)
                 } else {
                     console.log(chalk.green('Nice, your operation has been canceled~'))
                     process.exit()

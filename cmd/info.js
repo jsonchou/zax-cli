@@ -26,7 +26,7 @@ class INFO {
             let liston = {};
             list.map(c => {
                 liston[c] = [];
-                let arr = config.list[c];
+                let arr = serverConfig.list[c];
                 liston[c] = liston[c].concat(arr.filter(c => c.on == true));
             });
             res = liston;
