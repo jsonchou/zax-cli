@@ -5,7 +5,6 @@ const path = require('path')
 const program = require('commander')
 
 const chalk = require('chalk')
-const execSync = require('child_process').execSync;
 
 const subPath = process.cwd()
 const basePath = path.join(subPath, 'build/config.js')
@@ -15,16 +14,16 @@ program
     .version(require('../package').version)
 
 program
-    .command('config')
+    .command('info')
     .description('Show all config information')
     .option('-f, --ftp', 'Get ftp information')
     .option('-s, --spa', 'Get current spa type')
     .option('-l, --list', 'List all of active projects')
     .option('-a, --all', 'List all of configuration')
     .action(function (options) {
-        let CONFIG = require('../cmd/config');
-        let config = new CONFIG(options);
-        config.cmd();
+        let INFO = require('../cmd/info');
+        let info = new INFO(options);
+        info.cmd();
     })
 
 program

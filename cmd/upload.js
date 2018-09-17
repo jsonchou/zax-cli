@@ -121,14 +121,35 @@ class UPLOAD {
         return new Promise((resolve, reject) => {
             let serverDir = serverFile.slice(0, serverFile.lastIndexOf('/') + 1);
             try {
-                conn.exec(`mkdir -p ${serverDir}`, function (err, res) {
-                    try {
-                        sftp.fastPut(file, serverFile, {}, (err, res) => {
-                            resolve('done');
-                        })
-                    } catch (err) {
-                        throw new Error('fastPut', err)
+                conn.exec(`mkdir -p ${serverDir}`, function (err, stream) {
+
+                    if (err) {
+                        console.log('conn.exec mkdir', err)
+                        throw err;
                     }
+
+                    if (stream) {
+                        stream.on('close', function (code, signal) {
+                            // console.log('Stream :: close :: code: ' + code + ', signal: ' + signal);
+                            try {
+                                sftp.fastPut(file, serverFile, {}, (err, res) => {
+                                    // console.log(file, serverFile, res, 123);
+                                    resolve('done')
+                                })
+                            } catch (err) {
+                                throw new Error('fastPut', err)
+                            }
+
+                            // conn.end();
+                        }).on('data', function (data) {
+                            console.log('STDOUT: ' + data);
+                        }).stderr.on('data', function (data) {
+                            console.log('STDERR: ' + data);
+                        });
+                    }
+
+                    // return;
+
                 })
             } catch (err) {
                 throw new Error('mkdir', err)
@@ -210,8 +231,10 @@ class UPLOAD {
             inquirer.prompt(reconfirm).then(async res => {
                 if (res.continue) {
                     await this._upload()
-                    rainbow(`Your ${this.devConfig.spa} assets ${this.assets} has been uploaded to ${this.env} environment`);
-                    process.exit()
+                    rainbow(`Your ${this.devConfig.spa} assets of ${this.assets} has been uploaded to ${this.env} environment`);
+                    setTimeout(() => {
+                        process.exit()
+                    }, 3000)
                 } else {
                     console.log(chalk.green('Nice, your operation has been canceled~'))
                     process.exit()
