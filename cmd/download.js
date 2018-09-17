@@ -22,6 +22,7 @@ class DOWNLOAD {
 
         setTimeout(() => {
             spinner.succeed('Download zax-package, done!');
+            process.exit();
         }, 2500);
     }
 }

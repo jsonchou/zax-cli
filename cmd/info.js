@@ -22,7 +22,7 @@ class INFO {
         } else if (spa) {
             res = serverConfig['spa'];
         } else if (list) {
-            let list = Object.keys(config.list);
+            let list = Object.keys(serverConfig.list);
             let liston = {};
             list.map(c => {
                 liston[c] = [];
@@ -53,6 +53,7 @@ class INFO {
 
         }
         console.log(res);
+        process.exit();
     }
 }
 

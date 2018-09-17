@@ -267,6 +267,7 @@ class CREATE {
 
                 setTimeout(() => {
                     spinner.succeed(`CREATE ${spa} ${activityCode}, done!`);
+                    process.exit();
                 }, 1000)
 
             });

@@ -18,6 +18,9 @@ const serverPathPrefix = '/www/website/assets/subject';//服务器路径地址
 
 const subPath = process.cwd()
 
+let sftp
+let spinner
+
 let reconfirm = [{
     type: 'confirm',
     name: 'continue',
@@ -117,15 +120,16 @@ class UPLOAD {
             }).connect(this.devConfig.ftp[this.env]);
         });
     }
-    async _singleUpload(sftp, file, serverFile) {
+    async _singleUpload(spinner, sftp, file, serverFile) {
+
         return new Promise((resolve, reject) => {
             let serverDir = serverFile.slice(0, serverFile.lastIndexOf('/') + 1);
             try {
                 conn.exec(`mkdir -p ${serverDir}`, function (err, stream) {
 
                     if (err) {
-                        console.log('conn.exec mkdir', err)
-                        throw err;
+                        // console.log('conn.exec mkdir', err)
+                        // throw err;
                     }
 
                     if (stream) {
@@ -134,6 +138,7 @@ class UPLOAD {
                             try {
                                 sftp.fastPut(file, serverFile, {}, (err, res) => {
                                     // console.log(file, serverFile, res, 123);
+                                    sftp.end();
                                     resolve('done')
                                 })
                             } catch (err) {
@@ -160,21 +165,18 @@ class UPLOAD {
 
         return new Promise(async (resolve, reject) => {
             //创建sftp
-            let sftp = await this.connectServer();
+            sftp = await this.connectServer();
             let spa = this.devConfig.spa;
 
             let hasSpa = await this._checkSpaProject();
             if (hasSpa) {
                 let openProjects = this.devConfig.list[spa].filter(item => item.on == true);
                 if (openProjects.length) {
-                    openProjects.map(async project => {
+                    let lens = openProjects.length;
+                    let spinner = new Ora();
+                    openProjects.map(async (project, index) => {
 
-                        let spinner = new Ora({
-                            text: `Uploading assets ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}`,
-                            spinner: process.argv[2]
-                        });
-
-                        spinner.start();
+                        spinner.text = `Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}`;
 
                         let spaRoot = path.join(subPath, `${spa}/${project.name}`);
 
@@ -197,12 +199,14 @@ class UPLOAD {
                                 let stats = fs.lstatSync(sub)
                                 if (stats && stats.isFile()) {
                                     let serverFile = serverPathPrefix + sub.slice(path.join(subPath).length);
-                                    proms.push(this._singleUpload(sftp, sub, serverFile))
+                                    proms.push(this._singleUpload(spinner, sftp, sub, serverFile))
                                 }
                             } catch (err) {
                                 throw new Error('lstatSync', err)
                             }
                         })
+
+                        spinner.start();
 
                         let ftpRes = await Promise.all(proms);
 
@@ -242,7 +246,9 @@ class UPLOAD {
             });
         } else {
             await this._upload()
-            process.exit()
+            setTimeout(() => {
+                process.exit()
+            }, 1000)
         }
     }
 }
