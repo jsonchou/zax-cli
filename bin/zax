@@ -50,7 +50,6 @@ program
             console.log(`you should upload you assets as ${assetsArr.join(',')}`);
             return;
         }
-
         let assetsMap = {
             js: "scripts",
             css: 'styles',

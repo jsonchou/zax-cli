@@ -59,6 +59,11 @@ class UPLOAD {
     async _preFetchHtml(project, config) {
         // clear redis cache
         return new Promise((resolve, reject) => {
+
+            if (this.assets === 'images') {
+                resolve('done');
+                return;
+            }
             if (config.machine.indexOf('test') > -1) {
                 reject(false)
                 return;
@@ -246,7 +251,7 @@ class UPLOAD {
 
                         sftp.end();
                         let projectConfigFile = require(path.join(spaRoot, 'api/config'));
-                        // this._preFetchHtml(project, projectConfigFile)
+                        await this._preFetchHtml(project, projectConfigFile)
                         if (this.env !== 'production') {
                             spinner.succeed(`Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done!\r\n`);
                         }
@@ -260,14 +265,13 @@ class UPLOAD {
             }
         })
 
-
     }
     async cmd() {
         if (this.env === 'production') {
             inquirer.prompt(reconfirm).then(async res => {
                 if (res.continue) {
                     await this._upload()
-                    rainbow(`Your ${this.devConfig.spa} assets of ${this.assets} has been uploaded to ${this.env} environment`);
+                    rainbow(`${this.devConfig.spa}/${this.assets} upload to ${this.env} environment, done!`);
                     setTimeout(() => {
                         process.exit()
                     }, 2000)

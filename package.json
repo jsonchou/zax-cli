@@ -1,6 +1,6 @@
 {
     "name": "zax-cli",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "description": "dsp team cli tools",
     "main": "./bin/zax",
     "scripts": {
@@ -13,7 +13,6 @@
         "node": ">=8.0.0"
     },
     "keywords": [
-        "skeleton",
         "package"
     ],
     "dependencies": {
@@ -36,8 +35,5 @@
     "homepage": "https://github.com/jsonchou/zax-cli",
     "author": "jsonchou",
     "license": "MIT",
-    "private": false,
-    "devDependencies": {
-        "zax-package": "0.0.3"
-    }
+    "private": false
 }

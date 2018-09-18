@@ -12,5 +12,5 @@ $ cd your-spa-parent-directory
 $ zax download
 $ zax upload <assets> [options]
 $ zax create
-$ zax config [options]
+$ zax info [options]
 ```
