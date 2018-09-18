@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-'use strict';
+'use strict'
 const path = require('path')
 const inquirer = require('inquirer')
 const gitPkg = require('download-git-repo')
@@ -11,7 +11,7 @@ const chalk = require('chalk')
 const fs = require('fs-extra')
 const rm = require('rimraf').sync
 const glob = require('glob')
-const Ora = require('ora');
+const Ora = require('ora')
 
 const subPath = process.cwd()
 const basePath = path.join(subPath, 'build/config.js')
@@ -19,8 +19,9 @@ const config = require(basePath)
 
 const gitUser = require('../libs/git-user')
 const genDate = require('../libs/gendate')
+const loadRemotePreset = require('../libs/loadRemotePreset')
 
-let spinner, inputProject, inputSubject;
+let spinner, inputProject, inputSubject
 
 let questions = [{
     type: 'list',
@@ -28,7 +29,7 @@ let questions = [{
     message: 'What spa do you want?',
     choices: ["Vue", "React", "Preact", new inquirer.Separator(), "Common"],
     filter: function (val) {
-        return val.toLowerCase();
+        return val.toLowerCase()
     }
 }, {
     type: 'confirm',
@@ -36,7 +37,7 @@ let questions = [{
     message: 'Need code split?',
     default: false,
     when: function (answers) {
-        return answers.spa !== 'common';
+        return answers.spa !== 'common'
     }
 }, {
     type: 'list',
@@ -57,7 +58,7 @@ let projects = [{
     name: 'activityCode',
     message: "ActivityCode：",
     default() {
-        return genDate();
+        return genDate()
     }
 }, {
     type: 'input',
@@ -65,7 +66,7 @@ let projects = [{
     message: "需求方：",
     validate(val) {
         if (val.trim()) {
-            return true;
+            return true
         }
         return '需求方必填'
     }
@@ -75,7 +76,7 @@ let projects = [{
     message: "需求描述：",
     validate(val) {
         if (val.trim()) {
-            return true;
+            return true
         }
         return '需求描述必填'
     }
@@ -86,9 +87,9 @@ let projects = [{
     default: gitUser().name,
     validate(val) {
         if (val.trim()) {
-            return true;
+            return true
         }
-        return 'Please input a valid developer';
+        return 'Please input a valid developer'
     },
 }, {
     type: 'input',
@@ -117,11 +118,11 @@ class CREATE {
     //modify config
     async modifyConfig() {
 
-        spinner.color = 'yellow';
-        spinner.text = `Modify ${inputProject.spa} spa basic information`;
+        spinner.color = 'yellow'
+        spinner.text = `Modify ${inputProject.spa} spa basic information`
 
-        config.spa = inputProject.spa;//modify the type of spa
-        let row = config.list[inputProject.spa].filter(item => item.name == inputSubject.activityCode);
+        config.spa = inputProject.spa//modify the type of spa
+        let row = config.list[inputProject.spa].filter(item => item.name == inputSubject.activityCode)
 
         let obj = {
             name: inputSubject.activityCode,
@@ -133,9 +134,9 @@ class CREATE {
         }
 
         if (row && row.length) {
-            Object.assign(row[0], obj);
+            Object.assign(row[0], obj)
         } else {
-            config.list[inputProject.spa].push(obj);
+            config.list[inputProject.spa].push(obj)
         }
 
         let strm = beautify(JSON.stringify(config), {
@@ -157,28 +158,28 @@ class CREATE {
             // "end_with_newline": false,
             // "comma_first": false,
             "brace_style": "collapse"
-        });
+        })
 
         fs.writeFileSync(basePath, "module.exports =" + strm, 'utf8', {
             flag: 'w'
-        });
+        })
     }
     //replace template
     async replaceTmpl(folderPath) {
 
-        spinner.color = 'cyan';
+        spinner.color = 'cyan'
         spinner.text = `Replace ${inputProject.spa} project replacer`
 
         let res = glob.sync(folderPath + "/**/*.*", {})
 
         res.forEach((item) => {
 
-            let data = fs.readFileSync(item, 'utf8');
+            let data = fs.readFileSync(item, 'utf8')
             if (data) {
                 data = data.replace(new RegExp(`(${Object.keys(replaceTable).join('|')})`, 'gi'), function (item, p1, offset) {
                     return replaceTable[item]
                 })
-                fs.writeFileSync(item, data, 'utf8');
+                fs.writeFileSync(item, data, 'utf8')
             }
 
         })
@@ -198,36 +199,36 @@ class CREATE {
             designers
         } = inputSubject
 
-        const pkg = path.join(subPath, `./node_modules/zax-package`); //skeleton包路径
-        const pkgSpa = path.join(subPath, `./node_modules/zax-package/package/${spa == 'react' ? (spa + '/' + stateLib) : spa}`); //skeleton包路径
-        const folderPath = path.join(subPath, `./${spa}/${activityCode}`); //物理路径
+        const pkg = path.join(subPath, `./node_modules/zax-package`) //skeleton包路径
+        const pkgSpa = path.join(subPath, `./node_modules/zax-package/package/${spa == 'react' ? (spa + '/' + stateLib) : spa}`) //skeleton包路径
+        const folderPath = path.join(subPath, `./${spa}/${activityCode}`) //物理路径
 
         let existActivity = await this.checkActivityFolder(folderPath)
 
         if (existActivity && existActivity.length) {
             spinner.fail(`The ${spa} project name ${chalk.bold.yellow(activityCode)} has been used`)
-            process.exit(0);
+            process.exit(0)
         } else {
             //拷贝相应的项目
             await this.modifyConfig()
 
             // check zax-package exist
-            if (!fs.existsSync(pkg)) {
-                spinner.fail(`You should run [${chalk.bold.yellow('zax download')}] command to download the package`)
-                process.exit(0);
-                // return;
+            // 获取远程模板
+            spinner.color = 'blue'
+            spinner.text = 'Fetching remote preset zax-package ...'
+            try {
+                await loadRemotePreset()
+            } catch(e) {
+                spinner.fail('Failed fetching remote preset zax-package:')
+                throw e
             }
-
-            spinner.color = 'blue';
-            spinner.text = `Copy ${inputProject.spa} project to dist folder`
-
+            spinner.color = 'blue'
+            spinner.text = 'Copy ${inputProject.spa} project to dist folder'
             fs.copySync(pkgSpa, folderPath, {
                 overwrite: true
             })
-
             // replace-daddy loader did it
             await this.replaceTmpl(folderPath)
-
         }
 
     }
@@ -253,9 +254,9 @@ class CREATE {
                 spinner = new Ora({
                     text: `Loading ${spa} project`,
                     spinner: process.argv[2]
-                });
+                })
 
-                spinner.start();
+                spinner.start()
 
                 replaceTable = {
                     // '__spaDir__': activityCode, //20170303
@@ -266,14 +267,14 @@ class CREATE {
                 await this.handle()
 
                 setTimeout(() => {
-                    spinner.succeed(`CREATE ${spa} ${activityCode}, done!`);
-                    process.exit();
+                    spinner.succeed(`CREATE ${spa} ${activityCode}, done!`)
+                    process.exit()
                 }, 1000)
 
-            });
-        });
+            })
+        })
     }
 
 }
 
-module.exports = CREATE;
+module.exports = CREATE
