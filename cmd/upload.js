@@ -65,7 +65,8 @@ class UPLOAD {
                 return;
             }
             if (config.machine.indexOf('test') > -1) {
-                reject(false)
+                // reject(false)
+                resolve('done');
                 return;
             }
             try {
@@ -227,7 +228,8 @@ class UPLOAD {
                             files = glob.sync(path.join(spaRoot, `assets/${this.assets}/**/*`));
                         }
 
-                        if (this.assets !== 'images') {
+                        let projectConfigFile = require(path.join(spaRoot, 'api/config'));
+                        if ( projectConfigFile.ftp ) {
                             files.push(path.join(spaRoot, `index.html`));
                         }
 
