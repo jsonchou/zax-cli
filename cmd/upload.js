@@ -14,7 +14,6 @@ const Ora = require('ora');
 const rainbow = require('../libs/rainbow')
 
 const conn = new Client();
-
 const serverPathPrefix = '/www/website/assets/subject';//服务器路径地址
 
 const subPath = process.cwd()
@@ -66,7 +65,7 @@ class UPLOAD {
                 return;
             }
             if (config.machine.indexOf('test') > -1) {
-                resolve('done')
+                reject(false)
                 return;
             }
             try {
@@ -126,6 +125,7 @@ class UPLOAD {
         });
     }
     async _singleUpload(sftp, file, serverFile) {
+
         return new Promise((resolve, reject) => {
             let serverDir = serverFile.slice(0, serverFile.lastIndexOf('/') + 1);
             try {
@@ -219,9 +219,7 @@ class UPLOAD {
 
                         let spaRoot = path.join(subPath, `${spa}/${project.name}`);
 
-                        let files = [
-                            
-                        ];
+                        let files = [];
 
                         if (this.assets === 'all') {
                             files = glob.sync(path.join(spaRoot, 'assets/!(_src)/**/*'));
@@ -233,21 +231,13 @@ class UPLOAD {
                             files.push(path.join(spaRoot, `index.html`));
                         }
 
-                        // push dll.vendor.js
-                        const dllName = 'dll.vendor.js';
-                        files.push(path.join(subPath, `_base/dll/${spa}/${dllName}`),);
-
                         let proms = [];
+
                         files.sort((a, b) => a > b).map(async sub => {
                             try {
                                 let stats = fs.lstatSync(sub)
                                 if (stats && stats.isFile()) {
-                                    let serverFile = '';
-                                    if( sub.includes(dllName) ) {
-                                        serverFile = serverPathPrefix + path.join(`/${spa}/${project.name}/assets/scripts/${dllName}`);
-                                    } else {
-                                        serverFile = serverPathPrefix + sub.slice(path.join(subPath).length);
-                                    }
+                                    let serverFile = serverPathPrefix + sub.slice(path.join(subPath).length);
                                     proms.push(this._singleUpload(sftp, sub, serverFile))
                                 }
                             } catch (err) {
