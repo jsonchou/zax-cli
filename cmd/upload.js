@@ -252,7 +252,6 @@ class UPLOAD {
                         });
 
                         sftp.end();
-                        let projectConfigFile = require(path.join(spaRoot, 'api/config'));
                         await this._preFetchHtml(project, projectConfigFile)
                         if (this.env !== 'production') {
                             spinner.succeed(`Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done!\r\n`);
