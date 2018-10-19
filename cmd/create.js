@@ -203,22 +203,28 @@ class CREATE {
         const pkgSpa = path.join(subPath, `./node_modules/zax-package/package/${spa == 'react' ? (spa + '/' + stateLib) : spa}`) //skeleton包路径
         const folderPath = path.join(subPath, `./${spa}/${activityCode}`) //物理路径
 
-        let existActivity = await this.checkActivityFolder(folderPath)
+        let existActivity = await this.checkActivityFolder(folderPath).catch(err => {
+            console.log('checkActivityFolder', err)
+        })
 
         if (existActivity && existActivity.length) {
             spinner.fail(`The ${spa} project name ${chalk.bold.yellow(activityCode)} has been used`)
             process.exit(0)
         } else {
             //拷贝相应的项目
-            await this.modifyConfig()
+            await this.modifyConfig().catch(err => {
+                console.log('modifyConfig', err)
+            })
 
             // check zax-package exist
             // 获取远程模板
             spinner.color = 'blue'
             spinner.text = 'Fetching remote preset zax-package ...'
             try {
-                await loadRemotePreset()
-            } catch(e) {
+                await loadRemotePreset().catch(err => {
+                    console.log('loadRemotePreset', err)
+                })
+            } catch (e) {
                 spinner.fail('Failed fetching remote preset zax-package:')
                 throw e
             }
@@ -228,7 +234,9 @@ class CREATE {
                 overwrite: true
             })
             // replace-daddy loader did it
-            await this.replaceTmpl(folderPath)
+            await this.replaceTmpl(folderPath).catch(err => {
+                console.log('replaceTmpl', err)
+            })
         }
 
     }
@@ -264,7 +272,9 @@ class CREATE {
                     '__codeSplit__': codeSplit, //code split
                 }
 
-                await this.handle()
+                await this.handle().catch(err => {
+                    console.log('handle', err)
+                })
 
                 setTimeout(() => {
                     spinner.succeed(`CREATE ${spa} ${activityCode}, done!`)

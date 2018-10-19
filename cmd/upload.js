@@ -103,7 +103,9 @@ class UPLOAD {
                     let spaRootHtml = path.join(subPath, `${spa}/${project.name}`);
                     proms.push(_tinyEvt(spaRootHtml, project.name));
                 })
-                let res = await Promise.all(proms);
+                let res = await Promise.all(proms).catch(err => {
+                    console.log('_checkSpaProject', err)
+                });
                 resolve(res)
             } else {
                 console.log(`You have no open porject, you can turn it on in your configuration file, or you can run ${chalk.yellow('zax create')} to get a new project`)
@@ -201,13 +203,17 @@ class UPLOAD {
     }
     async _upload() {
 
-        sftp = await this.connectServer();
+        sftp = await this.connectServer().catch(err => {
+            console.log('connectServer', err)
+        });
         let spa = this.devConfig.spa;
 
         return new Promise(async (resolve, reject) => {
             //创建sftp
 
-            let hasSpa = await this._checkSpaProject();
+            let hasSpa = await this._checkSpaProject().catch(err => {
+                console.log('_checkSpaProject', err)
+            });
             if (hasSpa) {
                 let openProjects = this.devConfig.list[spa].filter(item => item.on == true);
                 if (openProjects.length) {
@@ -229,7 +235,7 @@ class UPLOAD {
                         }
 
                         let projectConfigFile = require(path.join(spaRoot, 'api/config'));
-                        if ( projectConfigFile.ftp ) {
+                        if (projectConfigFile.ftp) {
                             files.push(path.join(spaRoot, `index.html`));
                         }
 
@@ -252,7 +258,9 @@ class UPLOAD {
                         });
 
                         sftp.end();
-                        await this._preFetchHtml(project, projectConfigFile)
+                        await this._preFetchHtml(project, projectConfigFile).catch(err => {
+                            console.log('_preFetchHtml', err)
+                        });
                         if (this.env !== 'production') {
                             spinner.succeed(`Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done!\r\n`);
                         }
@@ -271,7 +279,9 @@ class UPLOAD {
         if (this.env === 'production') {
             inquirer.prompt(reconfirm).then(async res => {
                 if (res.continue) {
-                    await this._upload()
+                    await this._upload().catch(err => {
+                        console.log('_upload', err)
+                    });
                     rainbow(`${this.devConfig.spa}/${this.assets} upload to ${this.env} environment, done!`);
                     setTimeout(() => {
                         process.exit()
@@ -282,7 +292,9 @@ class UPLOAD {
                 }
             });
         } else {
-            await this._upload()
+            await this._upload().catch(err => {
+                console.log('_upload', err)
+            });
             setTimeout(() => {
                 process.exit()
             }, 1000)
