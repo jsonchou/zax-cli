@@ -211,14 +211,14 @@ class UPLOAD {
 
         // check config assets path
         if (configFile.machine || configFile.machineBox) {
-            console.error('config api params should be production env');
+            console.error('config:machine params should be production env');
             process.exit();
             return false;
         }
 
         //check assets path
         if (configFile.assetsPath.indexOf('staticdaily') > -1) {
-            console.error('config assetsPath params should be production env');
+            console.error('config:assetsPath params should be production env');
             process.exit();
             return false;
         }
