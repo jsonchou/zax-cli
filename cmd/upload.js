@@ -14,7 +14,7 @@ const Ora = require('ora');
 const rainbow = require('../libs/rainbow')
 
 const conn = new Client();
-const serverPathPrefix = '/www/website/assets/subject';//服务器路径地址
+const serverPathPrefix = '/www/website/assets/subject'; //服务器路径地址
 
 const subPath = process.cwd()
 
@@ -143,7 +143,9 @@ class UPLOAD {
                     let _unitUplod = () => {
                         try {
 
-                            sftp.fastPut(file, serverFile, { concurrency: 64 }, (err, res) => {
+                            sftp.fastPut(file, serverFile, {
+                                concurrency: 64
+                            }, (err, res) => {
                                 console.log(serverFile.replace(serverPathPrefix, ''))
                                 resolve('done')
                                 // sftp.end();
@@ -201,6 +203,37 @@ class UPLOAD {
             }
         })
     }
+    async _singleSafeCheck(configFile, htmlFile) {
+        //check by env
+        if (this.env !== 'production') {
+            return true;
+        }
+
+        // check config assets path
+        if (configFile.machine || configFile.machineBox) {
+            console.error('config api params should be production env');
+            process.exit();
+            return false;
+        }
+
+        //check assets path
+        if (configFile.assetsPath.indexOf('staticdaily') > -1) {
+            console.error('config assetsPath params should be production env');
+            process.exit();
+            return false;
+        }
+
+        // check html inner assets path
+        if (htmlFile.indexOf('staticdaily') > -1) {
+            console.error('your html inner path should be production env');
+            process.exit();
+            return false;
+        }
+
+        return true;
+
+
+    }
     async _upload() {
 
         sftp = await this.connectServer().catch(err => {
@@ -237,6 +270,14 @@ class UPLOAD {
                         let projectConfigFile = require(path.join(spaRoot, 'api/config'));
                         if (projectConfigFile.ftp) {
                             files.push(path.join(spaRoot, `index.html`));
+                        }
+
+                        let projectHtmlFile = fs.readFileSync(path.join(spaRoot, 'index.html'), 'utf8');
+
+                        let safeCheck = this._singleSafeCheck(projectConfigFile, projectHtmlFile);
+
+                        if (!safeCheck) {
+                            return;
                         }
 
                         let proms = [];
