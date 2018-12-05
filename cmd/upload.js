@@ -11,7 +11,7 @@ const glob = require("glob")
 const chalk = require('chalk')
 const Ora = require('ora');
 
-const rainbow = require('../libs/rainbow')
+const rainbow = require('done-rainbow')
 
 const conn = new Client();
 const serverPathPrefix = '/www/website/assets/subject'; //服务器路径地址
