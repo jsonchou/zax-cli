@@ -57,7 +57,7 @@ class UPLOAD {
         console.log(chalk[color]('-'.repeat(30)))
     }
     async _preFetchHtml(project, config) {
-        // clear redis cache
+        // clear redis catch
         return new Promise((resolve, reject) => {
 
             if (this.assets === 'images') {
@@ -127,80 +127,75 @@ class UPLOAD {
             }).connect(this.devConfig.ftp[this.env]);
         });
     }
-    async _singleUpload(sftp, file, serverFile) {
-
+    sleep(slp) {
         return new Promise((resolve, reject) => {
-            let serverDir = serverFile.slice(0, serverFile.lastIndexOf('/') + 1);
-            try {
+            setTimeout(() => {
+                resolve('awake')
+            }, slp)
+        })
+    }
+    _preCreateServerDir(serverDirs) {
+        let createDir = serverDir => {
+            return new Promise((resolve, reject) => {
                 conn.exec(`mkdir -p ${serverDir}`, (err, stream) => {
-
                     // if (err) {
-                    // console.log('conn.exec mkdir', err)
-                    // return sftp.end();
-                    // throw err;
+                    //     console.log('mkdir ', err)
+                    //     reject(err)
+                    // } else {
+                    //     resolve('mkdir done')
                     // }
-
-                    let _unitUplod = () => {
-                        try {
-
-                            sftp.fastPut(file, serverFile, {
-                                concurrency: 64
-                            }, (err, res) => {
-                                console.log(serverFile.replace(serverPathPrefix, ''))
-                                resolve('done')
-                                // sftp.end();
-                            })
-
-                            // let readStream = fs.createReadStream(file);
-                            // let writeStream = sftp.createWriteStream(serverFile, { flags: 'w' });
-                            // writeStream.on('close', () => {
-                            //     // console.log(serverFile.replace(serverPathPrefix, ''))
-                            //     // readStream.destroy();
-                            //     // writeStream.destroy();
-                            //     // return resolve('done')
-                            // }).on('end', () => {
-                            //     console.log('ftp end')
-                            //     conn.close();
-                            // }).on('error', (err) => {
-                            //     console.log('sftp put err:', err);
-                            // }).on('finish', () => {
-                            //     // console.log('sftp put finish:');
-                            //     console.log('done', serverFile.replace(serverPathPrefix, ''))
-                            //     readStream.destroy();
-                            //     writeStream.destroy();
-                            //     resolve('done')
-                            // })
-                            // readStream.pipe(writeStream, (err, res) => {
-                            //     console.log(err, res, 321)
-                            // });
-
-
-                        } catch (err) {
-                            throw new Error('fastPut', err)
-                        }
-                    }
-
-                    if (stream) {
-                        stream.on('close', function (code, signal) {
-                            // console.log('Stream :: close :: code: ' + code + ', signal: ' + signal);
-                            // console.log('stream close if')
-                            _unitUplod();
-                            // conn.end();
-                        }).on('data', function (data) {
-                            console.log('STDOUT: ' + data);
-                        }).stderr.on('data', function (data) {
-                            console.log('STDERR: ' + data);
-                        });
-                    } else {
-                        // console.log('stream else')
-                        _unitUplod();
-                        // reject('no stream', stream)
-                    }
-
+                    resolve('mkdir done')
                 })
+            })
+        }
+
+        let proms = []
+        serverDirs.map(item => {
+            let res = createDir(item).catch(err => {
+                console.log('createDir err', err)
+            })
+            proms.push(res)
+        })
+        return proms
+    }
+    _singleUpload(sftp, localPath, serverFolder, fileName) {
+        return new Promise((resolve, reject) => {
+            let serverFile = path.join(serverFolder, fileName)
+
+            console.log(2222222, serverFile)
+
+            try {
+                sftp.fastPut(localPath, serverFile, {
+                    concurrency: 200
+                }, (err, res) => {
+                    if (err) {
+                        console.log('---fastPut error2---')
+                        console.log('serverFolder', serverFolder)
+                        console.log('localPath', localPath)
+                        console.log('serverFile', fileName)
+                        console.log('err', err)
+                        console.log('-----\r\n')
+                        reject(err)
+                    }
+
+                    console.log(`${chalk.green('done:')} ` + serverFile.replace(serverPathPrefix, ''))
+                    resolve('done')
+                })
+
             } catch (err) {
-                throw new Error('mkdir', err)
+                reject(err)
+                // throw new Error('fastPut', err)
             }
+
+        })
+    }
+    _testPromise() {
+        return new Promise((resolve, reject) => {
+            console.log('test outer')
+            setTimeout(() => {
+                console.log('test inner')
+                resolve('test done')
+            }, 4000)
         })
     }
     async _singleSafeCheck(configFile, htmlFile) {
@@ -281,28 +276,46 @@ class UPLOAD {
                         }
 
                         let proms = [];
+                        let myserverfolders = []
 
-                        files.sort((a, b) => a > b).map(async sub => {
+                        files.sort((a, b) => a.length < b.length ? 1 : -1).map(localPath => {
                             try {
-                                let stats = fs.lstatSync(sub)
-                                if (stats && stats.isFile()) {
-                                    let serverFile = serverPathPrefix + sub.slice(path.join(subPath).length);
-                                    proms.push(this._singleUpload(sftp, sub, serverFile))
+                                let stats = fs.lstatSync(localPath)
+                                if (stats) {
+                                    let serverPath = serverPathPrefix + localPath.slice(path.join(subPath).length);
+                                    if (stats.isFile()) {
+                                        let serverFolder = serverPath.slice(0, serverPath.lastIndexOf('/'));
+                                        let fileName = localPath.slice(localPath.lastIndexOf('/') + 1)
+                                        myserverfolders.push(serverFolder)
+                                        let myprom = this._singleUpload(sftp, localPath, serverFolder, fileName)
+                                        proms.push(myprom)
+                                    }
                                 }
                             } catch (err) {
                                 throw new Error('lstatSync', err)
                             }
                         })
 
+                        myserverfolders = [...new Set(myserverfolders)]
+
+                        await Promise.all(this._preCreateServerDir(myserverfolders)).catch(err => {
+                            console.log('_preCreateServerDir err', err)
+                        })
+
+                        // await this.sleep(200)
+
                         await Promise.all(proms).catch(err => {
-                            console.log(err, 'Promise.all')
+                            console.log('Promise.all upload', err)
                         });
 
-                        sftp.end();
                         await this._preFetchHtml(project, projectConfigFile).catch(err => {
                             console.log('_preFetchHtml', err)
                         });
+
+                        sftp.end();
+
                         if (this.env !== 'production') {
+                            console.log('\r\n')
                             spinner.succeed(`Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done!\r\n`);
                         }
                         resolve('upload done')

@@ -1,6 +1,6 @@
 {
     "name": "zax-cli",
-    "version": "0.1.0",
+    "version": "1.0.1",
     "description": "dsp team cli tools",
     "main": "./bin/zax",
     "scripts": {
@@ -27,7 +27,8 @@
         "node-notifier": "^5.2.1",
         "ora": "^3.0.0",
         "request": "^2.88.0",
-        "ssh2": "^0.6.1"
+        "ssh2": "^0.6.1",
+        "zax-date": "^1.1.5"
     },
     "repository": {
         "type": "git",
