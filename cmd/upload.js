@@ -10,7 +10,7 @@ const Client = require('ssh2').Client;
 const glob = require("glob")
 const chalk = require('chalk')
 const Ora = require('ora');
-
+const zaxDate = require('zax-date');
 const rainbow = require('done-rainbow')
 
 const conn = new Client();
@@ -146,6 +146,15 @@ class UPLOAD {
                     // }
                     resolve('mkdir done')
                 })
+                // sftp.mkdir(`${serverDir}`, (err, res) => {
+                //     if (err) {
+                //         console.log('mkdir ', err)
+                //         reject(err)
+                //     } else {
+                //         resolve('mkdir done')
+                //     }
+                //     // resolve('mkdir done')
+                // })
             })
         }
 
@@ -162,8 +171,6 @@ class UPLOAD {
         return new Promise((resolve, reject) => {
             let serverFile = path.join(serverFolder, fileName)
 
-            console.log(2222222, serverFile)
-
             try {
                 sftp.fastPut(localPath, serverFile, {
                     concurrency: 200
@@ -176,6 +183,7 @@ class UPLOAD {
                         console.log('err', err)
                         console.log('-----\r\n')
                         reject(err)
+                        return;
                     }
 
                     console.log(`${chalk.green('done:')} ` + serverFile.replace(serverPathPrefix, ''))
@@ -247,80 +255,105 @@ class UPLOAD {
                 if (openProjects.length) {
                     let lens = openProjects.length;
                     let spinner = new Ora();
+                    let tmpProms = []
                     openProjects.map(async (project, index) => {
 
-                        // spinner.text = `Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}\r\n`;
-                        // spinner.start();
+                        tmpProms.push(new Promise(async (resolve, reject) => {
 
-                        let spaRoot = path.join(subPath, `${spa}/${project.name}`);
+                            // spinner.text = `Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}\r\n`;
+                            // spinner.start();
 
-                        let files = [];
+                            let spaRoot = path.join(subPath, `${spa}/${project.name}`);
 
-                        if (this.assets === 'all') {
-                            files = glob.sync(path.join(spaRoot, 'assets/!(_src)/**/*'));
-                        } else {
-                            files = glob.sync(path.join(spaRoot, `assets/${this.assets}/**/*`));
-                        }
+                            let files = [];
 
-                        let projectConfigFile = require(path.join(spaRoot, 'api/config'));
-                        if (projectConfigFile.ftp) {
-                            files.push(path.join(spaRoot, `index.html`));
-                        }
-
-                        let projectHtmlFile = fs.readFileSync(path.join(spaRoot, 'index.html'), 'utf8');
-
-                        let safeCheck = this._singleSafeCheck(projectConfigFile, projectHtmlFile);
-
-                        if (!safeCheck) {
-                            return;
-                        }
-
-                        let proms = [];
-                        let myserverfolders = []
-
-                        files.sort((a, b) => a.length < b.length ? 1 : -1).map(localPath => {
-                            try {
-                                let stats = fs.lstatSync(localPath)
-                                if (stats) {
-                                    let serverPath = serverPathPrefix + localPath.slice(path.join(subPath).length);
-                                    if (stats.isFile()) {
-                                        let serverFolder = serverPath.slice(0, serverPath.lastIndexOf('/'));
-                                        let fileName = localPath.slice(localPath.lastIndexOf('/') + 1)
-                                        myserverfolders.push(serverFolder)
-                                        let myprom = this._singleUpload(sftp, localPath, serverFolder, fileName)
-                                        proms.push(myprom)
-                                    }
-                                }
-                            } catch (err) {
-                                throw new Error('lstatSync', err)
+                            if (this.assets === 'all') {
+                                files = glob.sync(path.join(spaRoot, 'assets/!(_src)/**/*'));
+                            } else {
+                                files = glob.sync(path.join(spaRoot, `assets/${this.assets}/**/*`));
                             }
-                        })
 
-                        myserverfolders = [...new Set(myserverfolders)]
+                            let projectConfigFile = require(path.join(spaRoot, 'api/config'));
+                            if (projectConfigFile.ftp) {
+                                files.push(path.join(spaRoot, `index.html`));
+                            }
 
-                        await Promise.all(this._preCreateServerDir(myserverfolders)).catch(err => {
-                            console.log('_preCreateServerDir err', err)
-                        })
+                            let projectHtmlFile = fs.readFileSync(path.join(spaRoot, 'index.html'), 'utf8');
 
-                        // await this.sleep(200)
+                            let safeCheck = this._singleSafeCheck(projectConfigFile, projectHtmlFile);
 
-                        await Promise.all(proms).catch(err => {
-                            console.log('Promise.all upload', err)
-                        });
+                            if (!safeCheck) {
+                                return;
+                            }
 
-                        await this._preFetchHtml(project, projectConfigFile).catch(err => {
-                            console.log('_preFetchHtml', err)
-                        });
+                            let proms = [];
+                            let myserverfolders = []
+                            let clientServerPK = []
 
-                        sftp.end();
+                            files.sort((a, b) => a.length < b.length ? 1 : -1).map(localPath => {
+                                try {
+                                    let stats = fs.lstatSync(localPath)
+                                    if (stats) {
+                                        let serverPath = serverPathPrefix + localPath.slice(path.join(subPath).length);
+                                        if (stats.isFile()) {
+                                            let serverFolder = serverPath.slice(0, serverPath.lastIndexOf('/'));
+                                            let fileName = localPath.slice(localPath.lastIndexOf('/') + 1)
+                                            myserverfolders.push(serverFolder)
+                                            clientServerPK.push({
+                                                localPath,
+                                                serverFolder,
+                                                fileName
+                                            })
 
-                        if (this.env !== 'production') {
-                            console.log('\r\n')
-                            spinner.succeed(`Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done!\r\n`);
-                        }
-                        resolve('upload done')
+                                        }
+                                    }
+                                } catch (err) {
+                                    throw new Error('lstatSync', err)
+                                }
+                            })
+
+                            myserverfolders = [...new Set(myserverfolders)]
+
+                            await Promise.all(this._preCreateServerDir(myserverfolders)).catch(err => {
+                                console.log('_preCreateServerDir err', err)
+                            })
+
+                            await this._preFetchHtml(project, projectConfigFile).catch(err => {
+                                console.log('_preFetchHtml', err)
+                            });
+
+                            await this.sleep(500)
+
+                            clientServerPK.map(async (item, index) => {
+                                let {
+                                    localPath,
+                                    serverFolder,
+                                    fileName
+                                } = item
+                                let myprom = this._singleUpload(sftp, localPath, serverFolder, fileName)
+                                proms.push(myprom)
+                            })
+
+                            await Promise.all(proms).catch(err => {
+                                console.log('Promise.all upload err', err)
+                            });
+
+                            if (this.env !== 'production') {
+                                console.log('\r\n')
+                                spinner.succeed(`Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done!\r\n`);
+                            }
+
+                            resolve(`${project.name} upload done`)
+                        }))
 
                     });
+
+                    let res = await Promise.all(tmpProms).catch(err => {
+                        console.log('tmpProms err', err)
+                    })
+
+                    resolve(res)
+
                 }
             } else {
                 console.log(`No prjects here, you should run [${chalk.bold.yellow('zax create')}] command to init your project`)
@@ -338,6 +371,7 @@ class UPLOAD {
                     });
                     rainbow(`${this.devConfig.spa}/${this.assets} upload to ${this.env} environment, done!`);
                     setTimeout(() => {
+                        sftp && sftp.end()
                         process.exit()
                     }, 2000)
                 } else {
@@ -346,10 +380,13 @@ class UPLOAD {
                 }
             });
         } else {
+            let tmStart = Date.now()
             await this._upload().catch(err => {
                 console.log('_upload', err)
             });
+            console.log(zaxDate.diff(tmStart, Date.now()))
             setTimeout(() => {
+                sftp && sftp.end()
                 process.exit()
             }, 1000)
         }

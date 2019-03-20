@@ -1,6 +1,6 @@
 {
     "name": "zax-cli",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "dsp team cli tools",
     "main": "./bin/zax",
     "scripts": {
@@ -16,6 +16,7 @@
         "package"
     ],
     "dependencies": {
+        "async": "^2.6.2",
         "chalk": "^2.4.1",
         "commander": "^2.18.0",
         "done-rainbow": "0.0.1",
