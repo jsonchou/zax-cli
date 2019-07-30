@@ -1,0 +1,9 @@
+__tests__
+libs
+plugins
+build.js
+dll.vendor.js
+*.min.js
+*.chunk.js
+package.json
+node_modules

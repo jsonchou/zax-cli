@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "experimentalDecorators": true,
+        "allowSyntheticDefaultImports": true
+    },
+    "include": [],
+    "exclude": [
+        "node_modules",
+        "bower_components",
+        "jspm_packages",
+        "assets",
+        "tmp",
+        "temp"
+    ]
+}
