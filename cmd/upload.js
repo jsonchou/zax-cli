@@ -214,13 +214,15 @@ class UPLOAD {
 
                         let localDistPath = path.join(spaRoot, 'assets')
 
-                        const dirs = klawSync(localDistPath, { nofile: true })
+						const dirs = klawSync(localDistPath, { nofile: true })
+
+						console.log(`${chalk.green('upload dir:')}`)
                         dirs.map(item => {
                             let dirPath = item.path
                             let flag = dirPath.indexOf('/website/')
                             let serverPath = '/www' + dirPath.slice(flag)
                             conn.exec(`mkdir -p ${serverPath}`, (err, stream) => {
-                                console.log(`${chalk.green('done:')} ` + serverPath)
+                                console.log(`${chalk.green('done:')} ` + serverPath.replace(serverPathPrefix,''))
                             })
                         })
 
@@ -266,6 +268,7 @@ class UPLOAD {
                             proms.push(prom)
                         })
 
+						console.log(`${chalk.green('upload files:')}`)
                         let promsRes = await Promise.all(proms).catch(err => {
                             console.log('proms all err', err)
                         })
