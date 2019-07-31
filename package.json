@@ -1,42 +1,50 @@
 {
-    "name": "zax-cli",
-    "version": "1.0.2",
-    "description": "dsp team cli tools",
-    "main": "./bin/zax",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "bin": {
-        "zax": "./bin/zax"
-    },
-    "engines": {
-        "node": ">=8.0.0"
-    },
-    "keywords": [
-        "package"
-    ],
-    "dependencies": {
-        "async": "^2.6.2",
-        "chalk": "^2.4.1",
-        "commander": "^2.18.0",
-        "done-rainbow": "0.0.1",
-        "download-git-repo": "^1.1.0",
-        "fs-extra": "^7.0.0",
-        "glob": "^7.1.3",
-        "inquirer": "^6.2.0",
-        "js-beautify": "^1.8.6",
-        "node-notifier": "^5.2.1",
-        "ora": "^3.0.0",
-        "request": "^2.88.0",
-        "ssh2-sftp-client": "^2.5.0",
-        "zax-date": "^1.1.5"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/jsonchou/zax-cli.git"
-    },
-    "homepage": "https://github.com/jsonchou/zax-cli",
-    "author": "jsonchou",
-    "license": "MIT",
-    "private": false
+	"name": "zax-cli",
+	"version": "1.0.2",
+	"description": "dsp team cli tools",
+	"main": "./bin/zax",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"release": "node ./scripts/release"
+	},
+	"bin": {
+		"zax": "./bin/zax"
+	},
+	"engines": {
+		"node": ">=8.0.0"
+	},
+	"keywords": [
+		"package"
+	],
+	"files": [
+		"binn/*",
+		"cmd/*",
+		"libs/*",
+		"scripts/*"
+	],
+	"dependencies": {
+		"async": "^2.6.2",
+		"chalk": "^2.4.1",
+		"commander": "^2.18.0",
+		"done-rainbow": "0.0.1",
+		"download-git-repo": "^1.1.0",
+		"fs-extra": "^7.0.0",
+		"glob": "^7.1.3",
+		"inquirer": "^6.2.0",
+		"js-beautify": "^1.8.6",
+		"klaw-sync": "^6.0.0",
+		"node-notifier": "^5.2.1",
+		"ora": "^3.0.0",
+		"request": "^2.88.0",
+		"ssh2": "^0.8.5",
+		"zax-date": "^1.1.5"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jsonchou/zax-cli.git"
+	},
+	"homepage": "https://github.com/jsonchou/zax-cli",
+	"author": "jsonchou",
+	"license": "MIT",
+	"private": false
 }
