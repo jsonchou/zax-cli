@@ -254,7 +254,7 @@ class UPLOAD {
                                             // console.log('fastPut err', err)
                                             resolve('skip')
                                         } else {
-                                            console.log(`${chalk.green('done:')} ` + serverPath, filesNum, index)
+                                            console.log(`${chalk.green('done:')} ` + serverPath.replace(serverPathPrefix,''))
                                             resolve('done')
                                         }
                                     })
