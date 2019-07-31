@@ -1,6 +1,6 @@
 {
 	"name": "zax-cli",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "dsp team cli tools",
 	"main": "./bin/zax",
 	"scripts": {
