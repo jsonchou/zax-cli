@@ -17,6 +17,7 @@
 		"package"
 	],
 	"files": [
+		"bin/*",
 		"binn/*",
 		"cmd/*",
 		"libs/*",
