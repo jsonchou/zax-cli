@@ -13,7 +13,7 @@ const { zaxDate } = require('zax-date');
 const rainbow = require('done-rainbow')
 
 const conn = new Client();
-const serverPathPrefix = '/www/website/assets/subject'; //服务器路径地址
+let serverPathPrefix = '/www/website/assets/subject'; //服务器路径地址
 
 const subPath = process.cwd()
 
@@ -174,7 +174,6 @@ class UPLOAD {
 
         return true;
 
-
     }
     async _upload() {
 
@@ -194,6 +193,7 @@ class UPLOAD {
                 let spinner = new Ora();
                 let tmpProms = []
                 openProjects.map(async (project, index) => {
+
                     let myProjectProm = new Promise(async (resolve, reject) => {
 
                         // spinner.text = `Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}\r\n`;
@@ -213,34 +213,54 @@ class UPLOAD {
                         }
 
                         let localDistPath = path.join(spaRoot, 'assets')
-
-						const dirs = klawSync(localDistPath, { nofile: true })
-
-						console.log(`${chalk.green('upload dir:')}`)
-                        dirs.map(item => {
-                            let dirPath = item.path
-                            let flag = dirPath.indexOf('/website/')
-                            let serverPath = '/www' + dirPath.slice(flag)
-                            conn.exec(`mkdir -p ${serverPath}`, (err, stream) => {
-                                console.log(`${chalk.green('done:')} ` + serverPath.replace(serverPathPrefix,''))
-                            })
+                        let firstDir = path.join(serverPathPrefix, spa, project.name, 'assets')
+                        // 创建父级文件夹
+                        console.log(chalk.green(`\r\nupload ${project.name} start`))
+                        conn.exec(`mkdir -p ${firstDir}`, (err, stream) => {
+                            // if (err) {
+                            //     console.log(chalk.bold.red('fail:'), ' upload dir ', firstDir)
+                            // } else {
+                            console.log(`${chalk.green('done:')} ` + firstDir)
+                            // }
                         })
 
                         await this.sleep(500)
+
+                        // 额外上传html
+                        let myhtml = path.join(spaRoot, 'index.html')
+                        let myFlag = myhtml.indexOf('/website/')
+                        let myhtmlServerPath = '/www' + myhtml.slice(myFlag)
+                        projectConfigFile.ftp && sftp.fastPut(myhtml, myhtmlServerPath, { concurrency: 64, chunkSize: 32768 }, (err, result) => {
+                            console.log(`${chalk.green('\r\nupload index.html')}`)
+                            console.log(`${chalk.green('done:')} ` + myhtmlServerPath.replace(serverPathPrefix, ''))
+                        });
 
                         await this._preFetchHtml(project, projectConfigFile).catch(err => {
                             console.log('_preFetchHtml', err)
                         });
 
+                        // 上传文件夹
+                        const dirs = klawSync(localDistPath, { nofile: true }).sort((a, b) => {
+                            return a.path > b.path ? 1 : -1;
+                        })
 
-                        //额外上传html
-                        let myhtml = path.join(spaRoot, 'index.html')
-                        let myFlag = myhtml.indexOf('/website/')
-                        let myhtmlServerPath = '/www' + myhtml.slice(myFlag)
-                        projectConfigFile.ftp && sftp.fastPut(myhtml, myhtmlServerPath, (err, result) => {
+                        console.log(`${chalk.green('\r\nupload dirs:')}`)
+                        dirs.map(item => {
+                            let dirPath = item.path
+                            let flag = dirPath.indexOf('/website/')
+                            let serverPath = '/www' + dirPath.slice(flag)
+                            sftp.mkdir(`${serverPath}`, { mode: '0755' }, (err, stream) => {
+                                // if (err) {
+                                //     console.log(chalk.bold.red('fail:'), ' upload dir ', serverPath)
+                                // } else {
+                                console.log(`${chalk.green('done:')} ` + serverPath.replace(serverPathPrefix, ''))
+                                // }
+                            })
+                        })
 
-                        });
+                        await this.sleep(500)
 
+                        // 上传文件
                         const files = klawSync(localDistPath, { nodir: true })
                         const filesNum = files.length
                         let proms = []
@@ -254,9 +274,9 @@ class UPLOAD {
                                     sftp.fastPut(filePath, serverPath, (err, result) => {
                                         if (err) {
                                             // console.log('fastPut err', err)
-                                            resolve('skip')
+                                            resolve('skip', err)
                                         } else {
-                                            console.log(`${chalk.green('done:')} ` + serverPath.replace(serverPathPrefix,''))
+                                            console.log(`${chalk.green('done:')} ` + serverPath.replace(serverPathPrefix, ''))
                                             resolve('done')
                                         }
                                     })
@@ -268,19 +288,21 @@ class UPLOAD {
                             proms.push(prom)
                         })
 
-						console.log(`${chalk.green('upload files:')}`)
+                        console.log(`${chalk.green('\r\nupload files:')}`)
                         let promsRes = await Promise.all(proms).catch(err => {
                             console.log('proms all err', err)
                         })
 
                         // console.log('promsRes', promsRes)
 
+                        console.log(chalk.green(`\r\nupload ${project.name} end`))
+
                         if (this.env && this.env !== 'production') {
                             console.log('\r\n')
                             spinner.succeed(`Upload ${spa} ${project.name} assets of ${chalk.bold.cyan(this.assets)} to ${chalk.green(this.env)}, done!\r\n`);
                         }
 
-                        resolve(`${project.name} upload done`)
+                        resolve(`upload ${project.name} stop`)
 
                     })
                     tmpProms.push(myProjectProm)

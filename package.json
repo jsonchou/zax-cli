@@ -1,11 +1,13 @@
 {
 	"name": "zax-cli",
+	"innerModule": false,
+	"needBuild": false,
 	"version": "1.0.6",
 	"description": "dsp team cli tools",
 	"main": "./bin/zax",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"release": "node ./scripts/release"
+		"release": "node ./build/scripts/release"
 	},
 	"bin": {
 		"zax": "./bin/zax"
@@ -25,7 +27,7 @@
 	],
 	"dependencies": {
 		"async": "^2.6.2",
-		"chalk": "^2.4.1",
+		"chalk": "^2.4.2",
 		"commander": "^2.18.0",
 		"done-rainbow": "0.0.1",
 		"download-git-repo": "^1.1.0",
