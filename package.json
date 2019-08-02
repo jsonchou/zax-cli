@@ -2,7 +2,7 @@
 	"name": "zax-cli",
 	"innerModule": false,
 	"needBuild": false,
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"description": "dsp team cli tools",
 	"main": "./bin/zax",
 	"scripts": {
