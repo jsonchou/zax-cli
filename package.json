@@ -20,10 +20,11 @@
 	],
 	"files": [
 		"bin/*",
-		"binn/*",
+		"build/*",
 		"cmd/*",
 		"libs/*",
-		"scripts/*"
+		"scripts/*",
+		"types/*"
 	],
 	"dependencies": {
 		"async": "^2.6.2",
