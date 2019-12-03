@@ -71,7 +71,7 @@ class UPLOAD {
                 return;
             }
             try {
-                let url = `https://evt${config.machine}.zhongan.com/${this.devConfig.spa.charAt(0)}/${project.name}/?force=true&v=${Date.now()}&bizOrigin=fromSystemForceUpdate`;
+                let url = `https://evt${config.machine}.demo.com/${this.devConfig.spa.charAt(0)}/${project.name}/?force=true&v=${Date.now()}&bizOrigin=fromSystemForceUpdate`;
                 // console.log(url, 'prefectchhtml')
                 request.get(url).on('response', res => {
                     resolve('done');
