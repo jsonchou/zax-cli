@@ -37,7 +37,7 @@
 		"inquirer": "^6.2.0",
 		"js-beautify": "^1.8.6",
 		"klaw-sync": "^6.0.0",
-		"node-notifier": "^5.2.1",
+		"node-notifier": "^8.0.1",
 		"ora": "^3.0.0",
 		"request": "^2.88.0",
 		"ssh2": "^0.8.5",
